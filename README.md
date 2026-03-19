@@ -5,15 +5,18 @@ A full-stack role-based yoga management platform built with the MERN stack, conn
 ---
 
 ## 📸 Screenshots
-> Add screenshots here
-<img width="1905" height="941" alt="YogaPulse_Auth" src="https://github.com/user-attachments/assets/4b3c4a5f-d8d1-4eae-bad5-6571b48f88e3" />
-<img width="1910" height="920" alt="YogaPulse" src="https://github.com/user-attachments/assets/484addfb-0e51-4e75-9150-dd056e60d8dc" />
+
+
+<img width="1913" height="941" alt="YogaPulse_Auth" src="https://github.com/user-attachments/assets/dc20aad9-01a9-44d7-aed3-0d5675f72e82" />
+<img width="1910" height="920" alt="YogaPulse" src="https://github.com/user-attachments/assets/98bc6599-e8fe-4013-a34d-1e2c9d9b2f6a" />
+
 
 ---
 
 ## ✨ Features
 
-### 👨‍🎓 Student
+### 👨‍🎓 Student<img width="1913" height="941" alt="YogaPulse_Auth" src="https://github.com/user-attachments/assets/3af64e0c-cdc8-428e-a1d0-bd49da8047c7" />
+
 - Browse and enroll in approved yoga classes
 - Add classes to cart and complete payments via Stripe
 - View enrolled classes and payment history
