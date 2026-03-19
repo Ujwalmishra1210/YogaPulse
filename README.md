@@ -15,7 +15,7 @@ A full-stack role-based yoga management platform built with the MERN stack, conn
 
 ## ✨ Features
 
-### 👨‍🎓 Student<img width="1913" height="941" alt="YogaPulse_Auth" src="https://github.com/user-attachments/assets/3af64e0c-cdc8-428e-a1d0-bd49da8047c7" />
+
 
 - Browse and enroll in approved yoga classes
 - Add classes to cart and complete payments via Stripe
