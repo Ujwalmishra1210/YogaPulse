@@ -8,7 +8,7 @@ A full-stack role-based yoga management platform built with the MERN stack, conn
 
 
 <img width="1913" height="941" alt="YogaPulse_Auth" src="https://github.com/user-attachments/assets/dc20aad9-01a9-44d7-aed3-0d5675f72e82" />
-<img width="1910" height="920" alt="YogaPulse" src="https://github.com/user-attachments/assets/98bc6599-e8fe-4013-a34d-1e2c9d9b2f6a" />
+<img width="1902" height="941" alt="Screenshot 2026-08-05 131205" src="https://github.com/user-attachments/assets/d91b9763-f508-409f-8e9f-fe37534aeb8e" />
 
 
 ---
