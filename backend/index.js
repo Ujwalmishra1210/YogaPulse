@@ -6,6 +6,8 @@ const stripe = require('stripe')(process.env.PAYMENT_SECRET);
 const cors = require('cors');
 const port = process.env.PORT || 5000;
 const { MongoClient, ServerApiVersion, ObjectId } = require('mongodb');
+const mongoose = require('mongoose');
+
 // Middleware
 app.use(cors());
 app.use(express.json());
@@ -28,8 +30,7 @@ const verifyJWT = (req, res, next) => {
 }
 
 // MONGO DB ROUTES
-
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@music-cons.epjwsxc.mongodb.net/?retryWrites=true&w=majority&appName=music-cons`;
+const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.s4np7h9.mongodb.net/yoga_master?retryWrites=true&w=majority&appName=Cluster0`;
 
 // Create a MongoClient with a MongoClientOptions object to set the Stable API version
 const client = new MongoClient(uri, {
@@ -42,15 +43,18 @@ const client = new MongoClient(uri, {
 
 async function run() {
     try {
-        // Connect the client to the server	(optional starting in v4.7)
-        const database = client.db("yoga_master");
-        const userCollection = database.collection("users");
-        const classesCollection = database.collection("classes");
-        const cartCollection = database.collection("cart");
-        const enrolledCollection = database.collection("enrolled");
-        const paymentCollection = database.collection("payments");
-        const appliedCollection = database.collection("applied");
-        client.connect();
+        // Connect using mongoose (fixes SSL issues with raw driver on Windows)
+        await mongoose.connect(uri);
+        console.log("Pinged your deployment. You successfully connected to MongoDB!");
+
+        // Get collections via native driver using mongoose connection
+        const db = mongoose.connection.db;
+        const userCollection = db.collection("users");
+        const classesCollection = db.collection("classes");
+        const cartCollection = db.collection("cart");
+        const enrolledCollection = db.collection("enrolled");
+        const paymentCollection = db.collection("payments");
+        const appliedCollection = db.collection("applied");
 
         // Verify admin
         const verifyAdmin = async (req, res, next) => {
@@ -80,7 +84,6 @@ async function run() {
 
         app.post('/new-user', async (req, res) => {
             const newUser = req.body;
-
             const result = await userCollection.insertOne(newUser);
             res.send(result);
         })
@@ -111,7 +114,6 @@ async function run() {
             res.send(result);
         })
         // Delete a user
-
         app.delete('/delete-user/:id', verifyJWT, verifyAdmin, async (req, res) => {
             const id = req.params.id;
             const query = { _id: new ObjectId(id) };
@@ -142,7 +144,6 @@ async function run() {
 
 
         // ! CLASSES ROUTES
-
 
         app.post('/new-class', verifyJWT, verifyInstructor, async (req, res) => {
             const newClass = req.body;
@@ -222,7 +223,6 @@ async function run() {
             res.send(result);
         })
 
-
         // Get single class by id for details page
         app.get('/class/:id', async (req, res) => {
             const id = req.params.id;
@@ -230,6 +230,7 @@ async function run() {
             const result = await classesCollection.findOne(query);
             res.send(result);
         })
+
         // ! CART ROUTES
 
         // ADD TO CART
@@ -266,6 +267,7 @@ async function run() {
             const result = await cartCollection.deleteOne(query);
             res.send(result);
         })
+
         // PAYMENT ROUTES
         app.post('/create-payment-intent', verifyJWT, async (req, res) => {
             const { price } = req.body;
@@ -286,7 +288,6 @@ async function run() {
             const userEmail = paymentInfo.userEmail;
             const singleClassId = req.query.classId;
             let query;
-            // const query = { classId: { $in: classesId } };
             if (singleClassId) {
                 query = { classId: singleClassId, userMail: userEmail };
             } else {
@@ -305,14 +306,12 @@ async function run() {
                     availableSeats: classes.reduce((total, current) => total + current.availableSeats, 0) - 1 || 0,
                 }
             }
-            // const updatedInstructor = await userCollection.find()
             const updatedResult = await classesCollection.updateMany(classesQuery, updatedDoc, { upsert: true });
             const enrolledResult = await enrolledCollection.insertOne(newEnrolledData);
             const deletedResult = await cartCollection.deleteMany(query);
             const paymentResult = await paymentCollection.insertOne(paymentInfo);
             res.send({ paymentResult, deletedResult, enrolledResult, updatedResult });
         })
-
 
         app.get('/payment-history/:email', async (req, res) => {
             const email = req.params.email;
@@ -321,7 +320,6 @@ async function run() {
             res.send(result);
         })
 
-
         app.get('/payment-history-length/:email', async (req, res) => {
             const email = req.params.email;
             const query = { userEmail: email };
@@ -329,14 +327,12 @@ async function run() {
             res.send({ total });
         })
 
-
         // ! ENROLLED ROUTES
 
         app.get('/popular_classes', async (req, res) => {
             const result = await classesCollection.find().sort({ totalEnrolled: -1 }).limit(6).toArray();
             res.send(result);
         })
-
 
         app.get('/popular-instructors', async (req, res) => {
             const pipeline = [
@@ -374,40 +370,30 @@ async function run() {
             ]
             const result = await classesCollection.aggregate(pipeline).toArray();
             res.send(result);
-
         })
 
         // Admins stats 
         app.get('/admin-stats', verifyJWT, verifyAdmin, async (req, res) => {
-            // Get approved classes and pending classes and instructors 
             const approvedClasses = (await classesCollection.find({ status: 'approved' }).toArray()).length;
             const pendingClasses = (await classesCollection.find({ status: 'pending' }).toArray()).length;
             const instructors = (await userCollection.find({ role: 'instructor' }).toArray()).length;
             const totalClasses = (await classesCollection.find().toArray()).length;
             const totalEnrolled = (await enrolledCollection.find().toArray()).length;
-            // const totalRevenue = await paymentCollection.find().toArray();
-            // const totalRevenueAmount = totalRevenue.reduce((total, current) => total + parseInt(current.price), 0);
             const result = {
                 approvedClasses,
                 pendingClasses,
                 instructors,
                 totalClasses,
                 totalEnrolled,
-                // totalRevenueAmount
             }
             res.send(result);
-
         })
 
-        // !GET ALL INSTrUCTOR  
-
+        // !GET ALL INSTRUCTOR  
         app.get('/instructors', async (req, res) => {
             const result = await userCollection.find({ role: 'instructor' }).toArray();
             res.send(result);
         })
-
-
-
 
         app.get('/enrolled-classes/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
@@ -444,10 +430,8 @@ async function run() {
                         }
                     }
                 }
-
             ]
             const result = await enrolledCollection.aggregate(pipeline).toArray();
-            // const result = await enrolledCollection.find(query).toArray();
             res.send(result);
         })
 
@@ -457,28 +441,23 @@ async function run() {
             const result = await appliedCollection.insertOne(data);
             res.send(result);
         })
-        app.get('/applied-instructors/:email',   async (req, res) => {
+        app.get('/applied-instructors/:email', async (req, res) => {
             const email = req.params.email;
-            const result = await appliedCollection.findOne({email});
+            const result = await appliedCollection.findOne({ email });
             res.send(result);
         });
-        // Send a ping to confirm a successful connection
-        // await client.db("admin").command({ ping: 1 });
-        console.log("Pinged your deployment. You successfully connected to MongoDB!");
-    } finally {
-        // Ensures that the client will close when you finish/error
+
+    } catch (err) {
+        console.error('Failed to connect to MongoDB:', err.message);
     }
 }
-run().catch(console.dir);
-
+run();
 
 app.get('/', (req, res) => {
     res.send('Yoga Master Server is running!');
 })
 
-
 // Listen
 app.listen(port, () => {
     console.log(`SERVER IS RUNNING ON PORT ${port}`);
 })
-
